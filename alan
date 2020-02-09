@@ -1,0 +1,111 @@
+#!/bin/bash
+
+POSITIONAL=()
+while [[ $# -gt 0 ]]
+do
+key="$1"
+case $key in
+    -ir|--intermediate)
+    IR=1
+    shift
+    ;;
+    -s|--assembly)
+    ASM=1
+    shift
+    ;;
+    -x|--execute)
+    EXECUTE=1
+    shift
+    ;;
+    -O|--optimization)
+    OPT=1
+    shift
+    ;;
+    -o|--name)
+    NAME="$2"
+    NEW_NAME=1
+    shift
+    shift
+    ;;
+    -h|--help)
+    HELP=1
+    shift
+    ;;
+    *)
+    POSITIONAL+=("$1")
+    shift
+    ;;
+esac
+done
+if [[ $HELP == 1 ]] || [[ ${#POSITIONAL[@]} != 1 ]] || [[ ${POSITIONAL[0]: -5} != ".alan" ]] || [[ (-z "$NAME" && $NEW_NAME == 1) ]]; then
+  bold=$(tput bold)
+  normal=$(tput sgr0)
+echo "${bold}NAME${normal}
+       alan - compile *.alan file to executable.
+
+${bold}SYNOPSIS
+       ./alan${normal} [OPTION]... FILE
+
+${bold}DESCRIPTION${normal}
+       Compile *.alan FILE to executable.
+
+       ${bold}-ir, --intermediate${normal}
+              create intermediate representation (.imm) file
+
+       ${bold}-s --assembly${normal}
+              create assembly (.asm) file
+
+       ${bold}-x --execute${normal}
+              run executable after it is compiled
+
+       ${bold}-O --optimization${normal}
+              enable optimizations during compile time
+
+       ${bold}-o --name${normal}
+                set name of executable
+
+       ${bold}-h --help${normal}
+              display this help and exit
+
+${bold}EXAMPLE${normal}
+       ./alan -ir -s -x -o test program.alan
+            compile file ${bold}program.alan${normal},
+            create intermediate representation file named ${bold}program.ll${normal},
+            create assembly file named ${bold}program.s${normal},
+            enable optimizations during compile time,
+            create executable named ${bold}test${normal},
+            run executable ${bold}test${normal}"
+  exit 1
+fi
+
+FILENAME=$(basename ${POSITIONAL[0]%.alan})
+echo "Compiling $FILENAME..."
+if [ -d "$FILENAME" ]; then
+  rm -rf "$FILENAME"
+fi
+mkdir $FILENAME
+if [[ $OPT != 1 ]]; then
+  ./alanc ${POSITIONAL[0]} > "$FILENAME/$FILENAME.imm" || exit 1
+else
+  ./alanc ${POSITIONAL[0]} -O > "$FILENAME/$FILENAME.imm" || exit 1
+fi
+llc "$FILENAME/$FILENAME.imm" -o "$FILENAME/$FILENAME.asm" || exit 1
+if [[ $NEW_NAME != 1 ]]; then
+  NAME=$FILENAME
+fi
+clang "$FILENAME/$FILENAME.asm" "alan_lib_v2/lib.a" -o "$FILENAME/$NAME" || exit 1
+echo "Compilation complete!"
+if [[ $IR != 1 ]]; then
+  rm "$FILENAME/$FILENAME.imm"
+fi
+if [[ $ASM != 1 ]]; then
+  rm "$FILENAME/$FILENAME.asm"
+fi
+if [[ $EXECUTE == 1 ]]; then
+  echo "Executing $NAME..."
+  echo ""
+  echo "------------------------------------------"
+  echo ""
+  "./$FILENAME/$NAME"
+fi
+exit 0

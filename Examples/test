@@ -1,0 +1,10 @@
+main () : proc
+x : int;
+y : int;
+{
+  x = readInteger();
+  --y = readInteger();
+  if (x > 0 & y==5) {writeString("xasame\n");}
+  else {writeString("nikhsame\n");}
+  writeInteger(6/x);
+}

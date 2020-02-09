@@ -1,0 +1,9 @@
+hello () : int
+a: int;
+p3 (b: int, d:byte): proc
+{
+	writeChar(d);
+}
+{
+	writeString("Hello world!\n");
+}

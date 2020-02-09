@@ -1,0 +1,17 @@
+main () : proc
+
+	paparia (i : int, j : int) : int
+
+	n : int [5];
+	{
+	  return j;
+		i = i + 1;
+		j = 2 * j + i;
+		--paparia(i, j);
+	  return i;
+	}
+
+{ -- main
+	paparia(0, 1);
+	writeString("finish\n");
+} -- main
